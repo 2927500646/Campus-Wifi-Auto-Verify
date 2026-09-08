@@ -41,7 +41,7 @@ def main():
                                                     # 最少拉黑5分钟, 最多3个小时
                 if not suc:                         # 尝试校园网
                     print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 无LT账户，尝试校园网")
-                a, p = "B20240304419", "180451"
+                a, p = # 填你自己的哦
                 result = verify("xyw", a, p)
                 info = json.loads(result)
                 if info["result"] == 1:
