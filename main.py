@@ -42,6 +42,7 @@ def main():
                 suc = True                          # 已经在线
                 break
             elif info["result"] == 0 and info["ret_code"] == 1:
+<<<<<<< HEAD
                 """这个是认证失败，可能是密码错误，也可能是ip对不上导致的AC认证失败,以及抢占登录导致的结果"""
                 print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 认证失败 account {a}")
                 if "正在为您抢占登陆，请尝试再次登陆" in info["msg"]:
@@ -51,6 +52,32 @@ def main():
                     print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 夜间断网 account {a}")
                     for _ in blockList:
                         _ += 60                     # 夜间全部拉黑5个小时
+=======
+                """这个是认证失败，可能是密码错误，也可能是ip对不上导致的AC认证失败"""
+                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 认证失败,密码错误或IP错误 account {a}")
+            elif info["result"] == 0 and info["ret_code"] == 3:
+                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 账户占用 account {a}")
+                blocklist[i] += random.choice([1, 12, 24, 36])
+                                                    # 最少拉黑5分钟, 最多3个小时
+                if not suc:                         # 尝试校园网
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 无LT账户，尝试校园网")
+                a, p = # 填你自己的哦
+                result = verify("xyw", a, p)
+                info = json.loads(result)
+                if info["result"] == 1:
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 认证成功 account {a}")
+                    suc = True  # 同上逻辑
+                    break
+                elif info["result"] == 0 and info["ret_code"] == 2:
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 重复认证 account {a}")
+                    suc = True
+                    break
+                elif info["result"] == 0 and info["ret_code"] == 1:
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 认证失败,密码错误或IP错误 account {a}")
+                elif info["result"] == 0 and info["ret_code"] == 3:
+                    """猜测的返回码，有人占用"""
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 账户占用 account {a}")
+>>>>>>> 14371811070404eab0083cf53edcb157f4aafe10
                 else:
                     print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 认证失败 account {a}")
             else:
