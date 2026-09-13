@@ -2,6 +2,7 @@ import random
 import time
 from tool import verify
 import json
+from datetime import datetime
 
 
 
@@ -11,7 +12,9 @@ def main():
     with open("LTpasswords.txt", "r") as LTpasswords:
         LTpasswordsList = list(LTpasswords)
     blocklist = [0] * len(LTaccountsList)           # 账户黑名单次数，若遇到重复则拉黑一次，隔一个小时再次尝试
+    last_verify_time = [None] * len(LTaccountsList)    # 账号上次连接的时间
     while True:
+        print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 心跳检测")
         suc = False                                 # 存储心跳检测结果
         for i in range(len(LTaccountsList)):
             a, p = LTaccountsList[i].strip(), LTpasswordsList[i].strip()
@@ -25,47 +28,56 @@ def main():
             print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() json解析 {result}")
             info = json.loads(result)               # 转换json为字典格式
             if info["result"] == 1:                 # 认证成功
-                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 认证成功 account {a}")
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 认证成功 account {a}")
                 suc = True
+                now_verify_time = datetime.now()    # 记录认证时间
+
+						    # 10分钟内认证过了, 说明有人抢号, 那就拉黑一次
+                if last_verify_time[i] is not None and (now_verify_time-last_verify_time[i]).total_seconds() / 60 < 10:
+                    blocklist[i] += random.choice([12, 24])
+                last_verify_time = now_verify_time
                 break
             elif info["result"] == 0 and info["ret_code"] == 2:
-                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 重复认证 account {a}")
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 重复认证 account {a}")
                 suc = True                          # 已经在线
                 break
             elif info["result"] == 0 and info["ret_code"] == 1:
-                """这个是认证失败，可能是密码错误，也可能是ip对不上导致的AC认证失败"""
-                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 认证失败,密码错误或IP错误 account {a}")
-            elif info["result"] == 0 and info["ret_code"] == 3:
-                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 账户占用 account {a}")
-                blocklist[i] += random.choice([1, 12, 24, 36])
-                                                    # 最少拉黑5分钟, 最多3个小时
-                if not suc:                         # 尝试校园网
-                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 无LT账户，尝试校园网")
-                a, p = "B20240304419", "180451"
-                result = verify("xyw", a, p)
-                info = json.loads(result)
-                if info["result"] == 1:
-                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 认证成功 account {a}")
-                    suc = True  # 同上逻辑
-                    break
-                elif info["result"] == 0 and info["ret_code"] == 2:
-                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 重复认证 account {a}")
-                    suc = True
-                    break
-                elif info["result"] == 0 and info["ret_code"] == 1:
-                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 认证失败,密码错误或IP错误 account {a}")
-                elif info["result"] == 0 and info["ret_code"] == 3:
-                    """猜测的返回码，有人占用"""
-                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 账户占用 account {a}")
+                """这个是认证失败，可能是密码错误，也可能是ip对不上导致的AC认证失败,以及抢占登录导致的结果"""
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 认证失败 account {a}")
+                if "正在为您抢占登陆，请尝试再次登陆" in info["msg"]:
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 账户占用 account {a}")
+                    blocklist[i] += random.choice([12, 24])
+                elif "请选择运营商账号登录" in info["msg"]:
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 夜间断网 account {a}")
+                    for _ in blockList:
+                        _ += 60                     # 夜间全部拉黑5个小时
                 else:
-                    print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 其他错误 account {a}")
+                    print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 认证失败 account {a}")
             else:
-                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 其他错误 account {a}")
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 其他错误 account{a}")
+						    # for循环执行完后，再用校园网兜底
+        if not suc:                        	    # 尝试校园网, 逻辑同上
+            print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 无LT账户，尝试校园网")
+            a, p = "B20240304419", "180451"
+            result = verify("xyw", a, p)
+            info = json.loads(result)
+            if info["result"] == 1:
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 认证成功 account {a}")
+                suc = True
+                break
+            elif info["result"] == 0 and info["ret_code"] == 2:
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 重复认证 account {a}")
+                suc = True
+                break
+            elif info["result"] == 0 and info["ret_code"] == 1:
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 认证失败 account {a}")
+            else:
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 其他错误 account {a}")
 
         if not suc:
-            print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 心跳停止")
+            print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 心跳停止")
         else:
-            print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} main() 心跳保持")
+            print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 心跳保持")
         print("\n")
         time.sleep(5 * 60)                                  # 每5分钟执行一次心跳检测
 

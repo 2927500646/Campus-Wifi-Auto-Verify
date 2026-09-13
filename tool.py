@@ -60,7 +60,7 @@ def verify(wifi_type, account, password):
         ('wlan_ac_ip', ''),
         ('wlan_ac_name', 'ME60-CSDX'),
         ('jsVersion', '4.2.1'),
-        ('terminal_type', '2'),                     # 1电脑, 2手机
+        ('terminal_type', '1'),                     # 1电脑, 2手机
         ('lang', 'zh-cn'),
         ('v', '2315'),
         ('lang', 'zh'),
@@ -70,4 +70,3 @@ def verify(wifi_type, account, password):
     json_str = response.text[response.text.index('(') + 1: response.text.rindex(')')]
     print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} run verify() {json_str}")
     return json_str
-
