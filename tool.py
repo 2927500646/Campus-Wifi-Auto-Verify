@@ -4,6 +4,10 @@ import time
 import socket
 
 
+MINITE = 60
+HOUR = 60 * 60
+
+
 def get_ip():
     """
     返回本机当前用于连接校园网的内网IPv4地址。
@@ -22,7 +26,7 @@ def get_ip():
                 ip = addrs[netifaces.AF_INET][0]['addr']
                                                     # 排除回环和链路本地地址
             if not ip.startswith('127.') and not ip.startswith('169.254.'):
-                print(f"[INFO]:{time.strftime('%Y-%m-%d%H:%M:%S')} get_ip() ipv4:{ip}")
+                print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} get_ip() ipv4:{ip}")
                 return ip                           # 如果没找到，尝试使用socket获取（备选方案）
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -60,7 +64,7 @@ def verify(wifi_type, account, password):
         ('wlan_ac_ip', ''),
         ('wlan_ac_name', 'ME60-CSDX'),
         ('jsVersion', '4.2.1'),
-        ('terminal_type', '1'),                     # 1电脑, 2手机
+        ('terminal_type', '2'),                     # 1电脑, 2手机
         ('lang', 'zh-cn'),
         ('v', '2315'),
         ('lang', 'zh'),
