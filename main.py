@@ -19,6 +19,8 @@ def main():
         print(f"[INFO]:{time.strftime('%Y-%m-%d %H:%M:%S')} main() 心跳检测")
         suc = False                                 # 存储心跳检测结果
 
+        a, p = None, None
+
         # 首先尝试上一次认证成功的账号
         if last_verify_account is not None:
             a, p = LTaccountsList[last_verify_account]
